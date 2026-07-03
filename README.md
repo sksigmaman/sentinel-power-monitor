@@ -35,9 +35,60 @@
 
 ---
 
+## Architecture by the Numbers
+
+<div align="center">
+
+<img src="https://img.shields.io/badge/Services-11-1a1a1a?style=flat-square" alt="11 Services" />
+<img src="https://img.shields.io/badge/Classes-40%2B-1a1a1a?style=flat-square" alt="40+ Classes" />
+<img src="https://img.shields.io/badge/Blocking_Calls-Zero-1a1a1a?style=flat-square" alt="No delay() calls" />
+<img src="https://img.shields.io/badge/Scheduler-Cooperative-1a1a1a?style=flat-square" alt="Cooperative Scheduler" />
+<img src="https://img.shields.io/badge/Pattern-Singleton-1a1a1a?style=flat-square" alt="Singleton Pattern" />
+<img src="https://img.shields.io/badge/Pattern-Observer-1a1a1a?style=flat-square" alt="Observer Pattern" />
+<img src="https://img.shields.io/badge/Messaging-Queue--based-1a1a1a?style=flat-square" alt="Queue-based Messaging" />
+<img src="https://img.shields.io/badge/Storage-NVS-1a1a1a?style=flat-square" alt="NVS Storage" />
+<img src="https://img.shields.io/badge/Transport-HTTPS_Client-1a1a1a?style=flat-square" alt="HTTPS Client" />
+<img src="https://img.shields.io/badge/Data_Format-JSON-1a1a1a?style=flat-square" alt="JSON Serialization" />
+
+</div>
+
+<br/>
+
+| Metric | Value |
+| :--- | :--- |
+| Independent services (`lib/`) | 11 |
+| Classes across the codebase | 40+ |
+| Blocking calls | Zero — no `delay()` |
+| Task scheduling model | Cooperative Scheduler (non-blocking) |
+| Concurrency pattern | Singleton Pattern |
+| Event-handling pattern | Observer Pattern |
+| Outbound messaging model | Queue-based Messaging (producer-consumer) |
+| Persistence layer | NVS Storage |
+| Network transport | HTTPS Client (Telegram Bot API) |
+| Data interchange format | JSON Serialization |
+
+---
+
+## Why This Design
+
+Every conventional power-outage monitor buys **power-loss detection** by adding hardware that can survive the outage itself — batteries, relays, or opto-isolated sensing circuits. Sentinel Power Monitor takes the opposite trade-off: it accepts that it cannot detect the *instant* of power loss, in exchange for **zero additional hardware, near-zero cost, and a five-minute setup**.
+
+| Design | Cost | Detects Power Loss | Detects Power Restoration | Extra Hardware |
+| :--- | :--- | :--- | :--- | :--- |
+| UPS-based monitor | High | Yes | Yes | Yes |
+| Relay sensor | Medium | Yes | Yes | Yes |
+| Optocoupler | Medium | Yes | Yes | Yes |
+| **Sentinel Power Monitor** | **Very Low** | No | **Yes** | **No** |
+
+In most residential cases, *"is my power back yet"* matters more than a precise outage log — and that is exactly the signal this design delivers automatically, with a single board and a USB adapter, no wiring into the mains. For use cases that genuinely need loss detection and duration logging, [Potential Future Enhancements](#potential-future-enhancements) outlines how to add it without abandoning the minimal-hardware philosophy.
+
+---
+
 ## Table of Contents
 
 - [Features at a Glance](#features-at-a-glance)
+- [Architecture by the Numbers](#architecture-by-the-numbers)
+- [Why This Design](#why-this-design)
 - [Part 1: Project Record & Abstract](#part-1-project-record--abstract)
   - [Abstract](#abstract)
   - [1. Introduction](#1-introduction)
@@ -561,7 +612,7 @@ For larger changes, opening an issue first to discuss the approach is appreciate
 <tr>
 <td align="center" width="600">
 <sub>
-Designed and built <strong>Sentinel Power Monitor</strong> end-to-end hardware selection, firmware architecture, and documentation - as a case study in solving a real household problem with deliberately minimal hardware, and in documenting the trade-offs honestly rather than hiding them.
+Designed and built <strong>Sentinel Power Monitor</strong> end-to-end — hardware selection, firmware architecture, and documentation — as a case study in solving a real household problem with deliberately minimal hardware, and in documenting the trade-offs honestly rather than hiding them.
 </sub>
 </td>
 </tr>
@@ -572,5 +623,5 @@ Designed and built <strong>Sentinel Power Monitor</strong> end-to-end hardware s
 <br />
 
 <div align="center">
-  <sub>Sentinel Power Monitor - designed and maintained by <a href="https://www.linkedin.com/in/sunilkumarsekar/">Sunil Kumar S.</a></sub>
+  <sub>Sentinel Power Monitor — designed and maintained by <a href="https://www.linkedin.com/in/sunilkumarsekar/">Sunil Kumar S.</a></sub>
 </div>

@@ -612,7 +612,7 @@ For larger changes, opening an issue first to discuss the approach is appreciate
 <tr>
 <td align="center" width="600">
 <sub>
-Designed and built <strong>Sentinel Power Monitor</strong> end-to-end — hardware selection, firmware architecture, and documentation — as a case study in solving a real household problem with deliberately minimal hardware, and in documenting the trade-offs honestly rather than hiding them.
+Designed and built <strong>Sentinel Power Monitor</strong> end-to-end hardware selection, firmware architecture, and documentation as a case study in solving a real household problem with deliberately minimal hardware, and in documenting the trade-offs honestly rather than hiding them.
 </sub>
 </td>
 </tr>
@@ -623,5 +623,5 @@ Designed and built <strong>Sentinel Power Monitor</strong> end-to-end — hardwa
 <br />
 
 <div align="center">
-  <sub>Sentinel Power Monitor — designed and maintained by <a href="https://www.linkedin.com/in/sunilkumarsekar/">Sunil Kumar S.</a></sub>
+  <sub>Sentinel Power Monitor - designed and maintained by <a href="https://www.linkedin.com/in/sunilkumarsekar/">Sunil Kumar S.</a></sub>
 </div>

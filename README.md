@@ -544,8 +544,6 @@ For larger changes, opening an issue first to discuss the approach is appreciate
 
 ### Sunil Kumar S.
 
-**Embedded Systems Developer&nbsp;·&nbsp;IoT & Firmware Engineering**
-
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Sunil_Kumar_S.-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/sunilkumarsekar/)
 
 <br/>

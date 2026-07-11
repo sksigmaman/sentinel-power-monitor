@@ -8,6 +8,7 @@
     <img src="https://img.shields.io/badge/Framework-Arduino-00979D?style=for-the-badge&logo=arduino" alt="Arduino Framework" />
     <img src="https://img.shields.io/badge/Bot-Telegram-2CA5E0?style=for-the-badge&logo=telegram" alt="Telegram Bot API" />
     <img src="https://img.shields.io/badge/IDE-PlatformIO-orange?style=for-the-badge&logo=platformio" alt="PlatformIO" />
+    <img src="https://img.shields.io/badge/Version-v1.0.1-success?style=for-the-badge" alt="Version v1.0.1" />
     <img src="https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=for-the-badge" alt="Contributions Welcome" />
     <a href="https://www.linkedin.com/in/sunilkumarsekar/"><img src="https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=for-the-badge&logo=linkedin" alt="LinkedIn" /></a>
   </p>
@@ -87,6 +88,7 @@ In most residential cases, *"is my power back yet"* matters more than a precise 
 ## Table of Contents
 
 - [Features at a Glance](#features-at-a-glance)
+- [Changelog](#changelog)
 - [Architecture by the Numbers](#architecture-by-the-numbers)
 - [Why This Design](#why-this-design)
 - [Part 1: Project Record & Abstract](#part-1-project-record--abstract)
@@ -621,6 +623,23 @@ Designed and built <strong>Sentinel Power Monitor</strong> end-to-end hardware s
 </div>
 
 <br />
+
+---
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for the full history of changes.
+
+### Latest — v1.0.1 (2026-07-11)
+
+| Type | Summary |
+| :--- | :--- |
+| 🐛 Fix | Startup Telegram message now reliably sent after power cut, even when the router takes longer to boot than the ESP32. |
+| 🐛 Fix | WiFi retry interval corrected from ~170 ms (spam) to the configured 30-second delay. |
+| 🐛 Fix | `/start` command is no longer discarded when sent while the device was offline. |
+| ⚙️ Change | WiFi reconnect delay increased from 5 s → 30 s to give routers adequate time to boot after a power cut. |
+
+---
 
 <div align="center">
   <sub>Sentinel Power Monitor - designed and maintained by <a href="https://www.linkedin.com/in/sunilkumarsekar/">Sunil Kumar S.</a></sub>

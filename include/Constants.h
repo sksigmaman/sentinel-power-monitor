@@ -42,7 +42,7 @@ constexpr uint32_t   kNtpRetryIntervalMs = 30000;   // 30 s retry if sync fails
 // ---------------------------------------------------------------------------
 constexpr const char* kTelegramApiHost  = "api.telegram.org";
 constexpr uint16_t    kTelegramApiPort  = 443;
-constexpr uint32_t    kTelegramTimeoutMs = 8000;    // HTTP timeout per request
+constexpr uint32_t    kTelegramTimeoutMs = 4000;    // HTTP timeout per request (reduced from 8 s to prevent scheduler stall)
 constexpr uint32_t    kTelegramPollMs    = 1000;    // getUpdates interval
 constexpr uint8_t     kTelegramMaxRetries = 3;
 

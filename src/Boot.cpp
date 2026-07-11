@@ -40,6 +40,9 @@
 #include "Constants.h"
 #include "Version.h"
 
+// File logging
+#include "LogFileService.h"
+
 #include <esp_system.h>
 
 // ---------------------------------------------------------------------------
@@ -48,7 +51,8 @@
 
 namespace {
     sentinel::AppCredentials g_creds;
-    bool g_startupSent     = false;
+    bool g_startupSent     = false;  // true once the startup message has been ENQUEUED
+    bool g_startupAcked    = false;  // true once Telegram CONFIRMED receipt (200 OK)
     bool g_awaitRestart    = false;  // true when waiting for ✅ Yes / ❌ No
 }
 
@@ -74,10 +78,10 @@ static void handleCommand(const String& /*chatId*/, const String& text) {
     }
 
     if (text == KeyboardService::kBtnStatus) {
-        notif.enqueue(st.buildStatusMessage(), false);
+        notif.enqueue(st.buildStatusMessage(), true);  // true = re-show keyboard with every reply
 
     } else if (text == KeyboardService::kBtnDeviceInfo) {
-        notif.enqueue(st.buildDeviceInfoMessage(), false);
+        notif.enqueue(st.buildDeviceInfoMessage(), true);
 
     } else if (text == KeyboardService::kBtnRestart) {
         g_awaitRestart = true;
@@ -102,7 +106,7 @@ static void handleCommand(const String& /*chatId*/, const String& text) {
         http.end();
 
     } else if (text == KeyboardService::kBtnHelp || text == "/start") {
-        notif.enqueue(st.buildHelpMessage(), false);
+        notif.enqueue(st.buildHelpMessage(), true);  // always re-attach keyboard on help/start
 
     } else if (text.length() > 0) {
         // Unknown command – re-send keyboard
@@ -120,6 +124,16 @@ void bootInit() {
     // --- Layer 1: Foundation ---
     LoggerService::instance().begin(sentinel::constants::kSerialBaudRate);
     LOGI("=== %s %s ===", SENTINEL_PROJECT, SENTINEL_VERSION);
+
+    // Enable FIFO rolling file log on LittleFS (persists across reboots)
+    if (LogFileService::instance().begin()) {
+        LoggerService::instance().enableFileLog(true);
+        LOGI("Boot: file logging active — log size %u KB / %u KB cap",
+             static_cast<unsigned>(LogFileService::instance().fileSize() / 1024),
+             static_cast<unsigned>(1024));  // 1 MB cap
+    } else {
+        LOGW("Boot: file logging unavailable — serial only");
+    }
 
     StorageService::instance().begin();
     SystemService::instance().begin();     // increments restart count
@@ -146,16 +160,52 @@ void bootInit() {
             LOGI("Boot: WiFi connected, starting NTP");
             TimeService::instance().begin();
 
-            // Send startup message once per boot
             if (!g_startupSent) {
-                g_startupSent = true; // Mark as queued to prevent duplicates on reconnect
+                // First connection this boot: enqueue the startup message
+                g_startupSent = true;  // prevent duplicate enqueue on future reconnects
                 SchedulerService::instance().addTask("startup-notif", 500, []() {
                     if (TimeService::instance().isSynced()) {
                         NotificationService::instance().enqueue(
                             StatusService::instance().buildStartupMessage(), true);
+
+                        // Force an immediate drain so the "back online" message
+                        // is dispatched BEFORE any stale offline commands are polled.
+                        NotificationService::instance().drain();
+
+                        // Check if the message was confirmed sent right away
+                        if (NotificationService::instance().pending() == 0) {
+                            g_startupAcked = true;
+                            LOGI("Boot: startup message confirmed sent to Telegram ✅");
+                        } else {
+                            // Still in queue (network busy/rate-limit). The scheduler
+                            // 'notif-drain' task will retry every 500 ms. The watcher
+                            // task below logs the moment Telegram finally confirms it.
+                            LOGW("Boot: startup message queued – awaiting Telegram confirmation...");
+                            SchedulerService::instance().addTask("startup-ack", 1000, []() {
+                                if (g_startupAcked) {
+                                    // Already confirmed – self-destruct
+                                    SchedulerService::instance().removeTask("startup-ack");
+                                    return;
+                                }
+                                // When the NotificationService queue drains to zero the
+                                // startup message (which was the only/first message) is gone
+                                if (NotificationService::instance().pending() == 0) {
+                                    g_startupAcked = true;
+                                    LOGI("Boot: startup message confirmed sent to Telegram ✅");
+                                    SchedulerService::instance().removeTask("startup-ack");
+                                }
+                            });
+                        }
+
                         SchedulerService::instance().removeTask("startup-notif");
                     }
                 });
+            } else if (!g_startupAcked) {
+                // Wi-Fi reconnected but startup message was not yet confirmed.
+                // Drain immediately to prioritise delivery without waiting for
+                // the next scheduled notif-drain tick (up to 500 ms away).
+                LOGI("Boot: Wi-Fi reconnected – startup message still pending, draining now");
+                NotificationService::instance().drain();
             }
         });
 

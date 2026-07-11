@@ -8,6 +8,7 @@
  */
 
 #include "LoggerService.h"
+#include "LogFileService.h"
 
 // ---------------------------------------------------------------------------
 // Singleton
@@ -51,6 +52,15 @@ void LoggerService::log(LogLevel level, const char* fmt, ...) {
     va_end(args);
 
     Serial.printf("%s [%s] %s\r\n", ts, levelTag(level), msg);
+
+    // Dual-write to flash log file when enabled.
+    // We build the full formatted line on the stack (no heap alloc) and
+    // hand it off to LogFileService, which handles appending and FIFO trim.
+    if (fileLogEnabled_) {
+        char fullLine[300];
+        snprintf(fullLine, sizeof(fullLine), "%s [%s] %s", ts, levelTag(level), msg);
+        LogFileService::instance().writeLine(fullLine);
+    }
 }
 
 // ---------------------------------------------------------------------------

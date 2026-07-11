@@ -11,6 +11,10 @@
 #pragma once
 
 #include <Arduino.h>
+
+// Forward declaration — full include lives in LoggerService.cpp only,
+// which prevents a circular LoggerService ↔ LogFileService dependency.
+class LogFileService;
 #include <stdarg.h>
 
 // ---------------------------------------------------------------------------
@@ -56,6 +60,16 @@ public:
     /** @brief Set runtime minimum log level. */
     void setLevel(LogLevel level) { minLevel_ = level; }
 
+    /**
+     * @brief Enable or disable dual-write to LogFileService.
+     *        Call with true AFTER LogFileService::instance().begin() succeeds.
+     *        Automatically disabled if LogFileService becomes unavailable.
+     */
+    void enableFileLog(bool enable) { fileLogEnabled_ = enable; }
+
+    /** @brief Returns true if file logging is currently active. */
+    bool isFileLogEnabled() const { return fileLogEnabled_; }
+
     /** @brief Mask a sensitive string for safe logging. Returns "****". */
     static const char* mask(const String& secret);
 
@@ -63,8 +77,9 @@ private:
     LoggerService() = default;
     ~LoggerService() = default;
 
-    LogLevel minLevel_ = LogLevel::INFO;
-    bool     begun_    = false;
+    LogLevel minLevel_       = LogLevel::INFO;
+    bool     begun_          = false;
+    bool     fileLogEnabled_ = false;
 
     static const char* levelTag(LogLevel level);
 };

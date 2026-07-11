@@ -127,6 +127,10 @@ void bootInit() {
 
     // Enable FIFO rolling file log on LittleFS (persists across reboots)
     if (LogFileService::instance().begin()) {
+        // Dump ALL historical logs from previous boots to Serial FIRST,
+        // before enabling new writes — gives a clean view of past crash history.
+        LogFileService::instance().dumpToSerial();
+
         LoggerService::instance().enableFileLog(true);
         LOGI("Boot: file logging active — log size %u KB / %u KB cap",
              static_cast<unsigned>(LogFileService::instance().fileSize() / 1024),
@@ -161,9 +165,21 @@ void bootInit() {
             TimeService::instance().begin();
 
             if (!g_startupSent) {
-                // First connection this boot: enqueue the startup message
-                g_startupSent = true;  // prevent duplicate enqueue on future reconnects
+                // Mark as "in-progress" so we don't spawn duplicate tasks on
+                // rapid reconnects. If NTP never syncs before the next drop,
+                // we reset this flag so the next reconnect tries again.
+                g_startupSent = true;
+
                 SchedulerService::instance().addTask("startup-notif", 500, []() {
+                    if (!WiFiService::instance().isConnected()) {
+                        // WiFi dropped before NTP synced — reset so the next
+                        // reconnect triggers a fresh enqueue attempt.
+                        LOGW("Boot: WiFi lost before NTP sync, startup message will retry on reconnect");
+                        g_startupSent = false;
+                        SchedulerService::instance().removeTask("startup-notif");
+                        return;
+                    }
+
                     if (TimeService::instance().isSynced()) {
                         NotificationService::instance().enqueue(
                             StatusService::instance().buildStartupMessage(), true);
@@ -199,12 +215,21 @@ void bootInit() {
 
                         SchedulerService::instance().removeTask("startup-notif");
                     }
+                    // else: NTP not yet synced — keep polling every 500 ms
                 });
             } else if (!g_startupAcked) {
                 // Wi-Fi reconnected but startup message was not yet confirmed.
+                // If the queue is empty it means the previous attempt never
+                // enqueued (e.g. NTP failed) — re-enqueue now that we're back.
+                if (NotificationService::instance().pending() == 0 &&
+                    TimeService::instance().isSynced()) {
+                    LOGI("Boot: Wi-Fi reconnected – re-sending startup message");
+                    NotificationService::instance().enqueue(
+                        StatusService::instance().buildStartupMessage(), true);
+                }
                 // Drain immediately to prioritise delivery without waiting for
                 // the next scheduled notif-drain tick (up to 500 ms away).
-                LOGI("Boot: Wi-Fi reconnected – startup message still pending, draining now");
+                LOGI("Boot: Wi-Fi reconnected – draining notification queue");
                 NotificationService::instance().drain();
             }
         });

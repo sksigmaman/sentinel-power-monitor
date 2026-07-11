@@ -53,6 +53,14 @@ public:
      */
     void writeLine(const char* line);
 
+    /**
+     * @brief Print the full contents of the saved log file to Serial.
+     *        Call this BEFORE enableFileLog(true) so historical logs appear
+     *        at the top of the serial output, clearly separated from the
+     *        current boot's live log stream.
+     */
+    void dumpToSerial() const;
+
     /** @brief Current log file size in bytes (updated on every write). */
     size_t fileSize() const { return size_; }
 

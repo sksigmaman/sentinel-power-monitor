@@ -12,8 +12,8 @@
 
 #define SENTINEL_VERSION_MAJOR 1
 #define SENTINEL_VERSION_MINOR 0
-#define SENTINEL_VERSION_PATCH 0
+#define SENTINEL_VERSION_PATCH 1
 
-#define SENTINEL_VERSION "v1.0.0"
+#define SENTINEL_VERSION "v1.0.1"
 #define SENTINEL_PROJECT "Sentinel Power Monitor"
 #define SENTINEL_AUTHOR  "Mr. Sunil Kumar S."

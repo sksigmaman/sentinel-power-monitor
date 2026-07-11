@@ -69,8 +69,9 @@ void WiFiService::update() {
                 handleConnected();
             } else if ((millis() - lastAttemptMs_) >= kWifiReconnectDelayMs) {
                 LOGI("WiFiService: retrying connection to '%s'...", ssid_.c_str());
-                state_ = sentinel::WifiState::RECONNECTING;
+                state_          = sentinel::WifiState::RECONNECTING;
                 connectStartMs_ = millis();
+                lastAttemptMs_  = millis();  // reset so the next retry waits a full kWifiReconnectDelayMs
                 tryConnect();
             }
             break;

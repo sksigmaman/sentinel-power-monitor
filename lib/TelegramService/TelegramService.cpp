@@ -130,9 +130,12 @@ void TelegramService::poll() {
             return;
         }
 
-        // Ignore stale messages (sent while device was offline)
-        // We use a 10 second window to account for polling delays and internet latency
-        if (TimeService::instance().isSynced() && msgDate > 0) {
+        // Ignore stale messages (sent while device was offline).
+        // Exception — always answered regardless of age:
+        //   • /start — re-attaches the keyboard so user can interact again
+        // All other commands (including Status) are ignored if > 10s old.
+        const bool isExempt = (text == "/start");
+        if (!isExempt && TimeService::instance().isSynced() && msgDate > 0) {
             const time_t now = TimeService::instance().unixTimestamp();
             if (now > msgDate && (now - msgDate) > 10) {
                 LOGI("TelegramService: ignored stale offline command '%s' (age %lld s)", text.c_str(), (now - msgDate));

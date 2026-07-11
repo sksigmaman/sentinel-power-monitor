@@ -60,13 +60,53 @@ bool LogFileService::begin() {
                   static_cast<unsigned>(size_),
                   static_cast<unsigned>(kLogMaxBytes / 1024));
 
-    // Remove any leftover temp file from a previous interrupted trim
-    if (LittleFS.exists(kTmpPath)) {
-        LittleFS.remove(kTmpPath);
-        Serial.println("[LogFileService] Removed stale temp file from previous trim");
-    }
+    // Silently remove any leftover temp file from a previous interrupted trim.
+    // Use remove() directly instead of exists()+remove(): the VFS layer logs a
+    // spurious error when exists() internally tries to open a missing file.
+    LittleFS.remove(kTmpPath);  // no-op (returns false) if file does not exist
 
     return true;
+}
+
+// ---------------------------------------------------------------------------
+// dumpToSerial() — stream the saved log file to Serial before new logs start
+// ---------------------------------------------------------------------------
+
+void LogFileService::dumpToSerial() const {
+    Serial.println();
+    Serial.println(F("================================================================================"));
+    Serial.printf( "[LogFileService] HISTORICAL LOG DUMP  |  file: %s  |  size: %u bytes\r\n",
+                   kLogPath, static_cast<unsigned>(size_));
+    Serial.println(F("================================================================================"));
+
+    if (!ready_ || size_ == 0) {
+        Serial.println(F("[LogFileService] (no historical log entries)"));
+        Serial.println(F("================================================================================"));
+        Serial.println();
+        return;
+    }
+
+    File f = LittleFS.open(kLogPath, "r");
+    if (!f) {
+        Serial.println(F("[LogFileService] ERROR: could not open log file for dump"));
+        Serial.println(F("================================================================================"));
+        Serial.println();
+        return;
+    }
+
+    // Stream file in small chunks — avoids large heap allocations
+    uint8_t buf[128];
+    while (f.available()) {
+        const size_t n = f.read(buf, sizeof(buf));
+        if (n > 0) Serial.write(buf, n);
+    }
+    f.close();
+
+    Serial.println();
+    Serial.println(F("================================================================================"));
+    Serial.println(F("[LogFileService] END OF HISTORICAL LOG — current boot logs follow below"));
+    Serial.println(F("================================================================================"));
+    Serial.println();
 }
 
 // ---------------------------------------------------------------------------
@@ -76,7 +116,9 @@ bool LogFileService::begin() {
 void LogFileService::writeLine(const char* line) {
     if (!ready_) return;
 
-    File f = LittleFS.open(kLogPath, "a");
+    // create=true is required in newer ESP32 Arduino LittleFS builds so that
+    // open() creates the file when it does not already exist.
+    File f = LittleFS.open(kLogPath, "a", /*create=*/true);
     if (!f) {
         // Filesystem may have become full or corrupt — disable to avoid spam
         Serial.println("[LogFileService] ERROR: could not open log for append — disabling file log");
@@ -137,7 +179,9 @@ void LogFileService::trim() {
     }
 
     // Copy everything after the trim point into the temp file in 4 KB chunks
-    File dst = LittleFS.open(kTmpPath, "w");
+    // create=true required so the ESP32 Arduino framework actually creates
+    // the new temp file rather than silently failing on a missing path.
+    File dst = LittleFS.open(kTmpPath, "w", /*create=*/true);
     if (!dst) {
         src.close();
         Serial.println("[LogFileService] ERROR: trim() could not create temp file");

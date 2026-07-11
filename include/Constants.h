@@ -24,7 +24,7 @@ constexpr uint32_t kSerialBaudRate = 115200;
 // WiFi
 // ---------------------------------------------------------------------------
 constexpr uint32_t kWifiConnectTimeoutMs  = 20000;  // 20 s initial connect
-constexpr uint32_t kWifiReconnectDelayMs  = 5000;   // 5 s between retries
+constexpr uint32_t kWifiReconnectDelayMs  = 30000;  // 30 s between retries
 constexpr uint8_t  kWifiMaxRetries        = 0;      // 0 = infinite
 
 // ---------------------------------------------------------------------------
